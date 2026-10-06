@@ -111,6 +111,8 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
+  final List<Map<String, dynamic>> cartItems = [];
+
   List<Map<String, dynamic>> get filteredItems {
     if (selectedCategory == 'All') {
       return menuItems;
@@ -119,6 +121,74 @@ class _HomePageState extends State<HomePage> {
     return menuItems
         .where((item) => item['category'] == selectedCategory)
         .toList();
+  }
+
+  int get cartCount {
+    int count = 0;
+
+    for (final item in cartItems) {
+      count += item['quantity'] as int;
+    }
+
+    return count;
+  }
+
+  int get cartTotal {
+    int total = 0;
+
+    for (final item in cartItems) {
+      total += (item['price'] as int) * (item['quantity'] as int);
+    }
+
+    return total;
+  }
+
+  void addToCart(Map<String, dynamic> item) {
+    final existingIndex = cartItems.indexWhere(
+      (cartItem) => cartItem['name'] == item['name'],
+    );
+
+    setState(() {
+      if (existingIndex != -1) {
+        cartItems[existingIndex]['quantity']++;
+      } else {
+        cartItems.add({
+          'name': item['name'],
+          'price': item['price'],
+          'icon': item['icon'],
+          'quantity': 1,
+        });
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item['name']} added to cart'),
+        duration: const Duration(milliseconds: 800),
+      ),
+    );
+  }
+
+  void increaseQuantity(int index) {
+    setState(() {
+      cartItems[index]['quantity']++;
+    });
+  }
+
+  void decreaseQuantity(int index) {
+    setState(() {
+      if (cartItems[index]['quantity'] > 1) {
+        cartItems[index]['quantity']--;
+      } else {
+        cartItems.removeAt(index);
+      }
+    });
+  }
+
+  void removeFromCart(int index) {
+    setState(() {
+      cartItems.removeAt(index);
+    });
   }
 
   @override
@@ -131,10 +201,25 @@ class _HomePageState extends State<HomePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                selectedIndex = 4;
+              });
+            },
+            icon: Badge(
+              isLabelVisible: cartCount > 0,
+              label: Text('$cartCount'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _buildBody(),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
+        selectedIndex: selectedIndex > 3 ? 0 : selectedIndex,
         onDestinationSelected: (index) {
           setState(() {
             selectedIndex = index;
@@ -169,6 +254,10 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBody() {
     if (selectedIndex == 1) {
       return _buildMenuPage();
+    }
+
+    if (selectedIndex == 4) {
+      return _buildCartPage();
     }
 
     if (selectedIndex != 0) {
@@ -210,7 +299,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 24),
-
           TextField(
             decoration: InputDecoration(
               hintText: 'Search food...',
@@ -223,9 +311,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
           const SizedBox(height: 28),
-
           const Text(
             'Categories',
             style: TextStyle(
@@ -233,9 +319,7 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 14),
-
           SizedBox(
             height: 100,
             child: ListView.separated(
@@ -273,9 +357,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-
           const SizedBox(height: 28),
-
           const Text(
             'Popular Today',
             style: TextStyle(
@@ -283,9 +365,7 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 14),
-
           LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = constraints.maxWidth > 700
@@ -304,6 +384,7 @@ class _HomePageState extends State<HomePage> {
                       width: itemWidth,
                       child: FoodCard(
                         item: featuredItems[index],
+                        onAdd: () => addToCart(featuredItems[index]),
                       ),
                     );
                   },
@@ -345,20 +426,16 @@ class _HomePageState extends State<HomePage> {
               color: Colors.grey.shade600,
             ),
           ),
-
           const SizedBox(height: 24),
-
           SizedBox(
             height: 45,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: categories.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final category = categories[index];
-                final isSelected =
-                    selectedCategory == category;
+                final isSelected = selectedCategory == category;
 
                 return FilterChip(
                   label: Text(category),
@@ -372,9 +449,7 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-
           const SizedBox(height: 24),
-
           LayoutBuilder(
             builder: (context, constraints) {
               final crossAxisCount =
@@ -386,20 +461,20 @@ class _HomePageState extends State<HomePage> {
 
               return GridView.builder(
                 shrinkWrap: true,
-                physics:
-                    const NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredItems.length,
                 gridDelegate:
                     SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 0.78,
+                  childAspectRatio: 0.72,
                 ),
                 itemBuilder: (context, index) {
                   return FoodCard(
                     item: filteredItems[index],
                     showAddButton: true,
+                    onAdd: () => addToCart(filteredItems[index]),
                   );
                 },
               );
@@ -409,16 +484,251 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget _buildCartPage() {
+    if (cartItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Your cart is empty',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add some delicious food from the menu.',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () {
+                setState(() {
+                  selectedIndex = 1;
+                });
+              },
+              icon: const Icon(Icons.restaurant_menu),
+              label: const Text('Browse Menu'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Cart',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$cartCount item${cartCount == 1 ? '' : 's'} in your cart',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: cartItems.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final item = cartItems[index];
+
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          item['icon'],
+                          size: 36,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['name'],
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              '₹${item['price']} each',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '₹${item['price'] * item['quantity']}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              decreaseQuantity(index);
+                            },
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                            ),
+                          ),
+                          Text(
+                            '${item['quantity']}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              increaseQuantity(index);
+                            },
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          removeFromCart(index);
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _priceRow(
+                    'Subtotal',
+                    '₹$cartTotal',
+                  ),
+                  const SizedBox(height: 10),
+                  _priceRow(
+                    'Service Fee',
+                    '₹0',
+                  ),
+                  const Divider(height: 24),
+                  _priceRow(
+                    'Total',
+                    '₹$cartTotal',
+                    isTotal: true,
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {},
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                        child: Text(
+                          'Proceed to Checkout',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceRow(
+    String title,
+    String value, {
+    bool isTotal = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: isTotal ? 19 : 16,
+            fontWeight:
+                isTotal ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isTotal ? 20 : 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class FoodCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool showAddButton;
+  final VoidCallback? onAdd;
 
   const FoodCard({
     super.key,
     required this.item,
     this.showAddButton = false,
+    this.onAdd,
   });
 
   @override
@@ -468,7 +778,7 @@ class FoodCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () {},
+                  onPressed: onAdd,
                   icon: const Icon(Icons.add),
                   label: const Text('Add'),
                 ),
