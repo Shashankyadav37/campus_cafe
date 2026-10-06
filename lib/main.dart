@@ -13,9 +13,7 @@ class CampusCafeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'CampusCafe',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
       home: const HomePage(),
@@ -34,30 +32,14 @@ class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
   String selectedCategory = 'All';
 
-  final List<String> pages = [
-    'Home',
-    'Menu',
-    'Orders',
-    'Profile',
-  ];
+  final List<Map<String, dynamic>> cartItems = [];
+  final List<Map<String, dynamic>> orders = [];
 
   final List<Map<String, dynamic>> categories = [
-    {
-      'name': 'Snacks',
-      'icon': Icons.fastfood,
-    },
-    {
-      'name': 'Meals',
-      'icon': Icons.rice_bowl,
-    },
-    {
-      'name': 'Drinks',
-      'icon': Icons.local_drink,
-    },
-    {
-      'name': 'Desserts',
-      'icon': Icons.icecream,
-    },
+    {'name': 'Snacks', 'icon': Icons.fastfood},
+    {'name': 'Meals', 'icon': Icons.rice_bowl},
+    {'name': 'Drinks', 'icon': Icons.local_drink},
+    {'name': 'Desserts', 'icon': Icons.icecream},
   ];
 
   final List<Map<String, dynamic>> menuItems = [
@@ -110,8 +92,6 @@ class _HomePageState extends State<HomePage> {
       'icon': Icons.cake,
     },
   ];
-
-  final List<Map<String, dynamic>> cartItems = [];
 
   List<Map<String, dynamic>> get filteredItems {
     if (selectedCategory == 'All') {
@@ -191,15 +171,45 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void placeOrder() {
+    if (cartItems.isEmpty) {
+      return;
+    }
+
+    final orderItems = cartItems.map((item) {
+      return {
+        'name': item['name'],
+        'price': item['price'],
+        'quantity': item['quantity'],
+        'icon': item['icon'],
+      };
+    }).toList();
+
+    final newOrder = {
+      'id': 'ORD-${1000 + orders.length + 1}',
+      'items': orderItems,
+      'total': cartTotal,
+      'status': 'Preparing',
+    };
+
+    setState(() {
+      orders.insert(0, newOrder);
+      cartItems.clear();
+      selectedIndex = 2;
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Order placed successfully!')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'CampusCafe',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -256,20 +266,16 @@ class _HomePageState extends State<HomePage> {
       return _buildMenuPage();
     }
 
+    if (selectedIndex == 2) {
+      return _buildOrdersPage();
+    }
+
     if (selectedIndex == 4) {
       return _buildCartPage();
     }
 
-    if (selectedIndex != 0) {
-      return Center(
-        child: Text(
-          pages[selectedIndex],
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
+    if (selectedIndex == 3) {
+      return _buildProfilePage();
     }
 
     return _buildHomePage();
@@ -285,18 +291,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Text(
             'Hello, Student! 👋',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
             'What would you like to eat today?',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -314,10 +314,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 28),
           const Text(
             'Categories',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -332,24 +329,17 @@ class _HomePageState extends State<HomePage> {
                 return Container(
                   width: 100,
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primaryContainer,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        category['icon'],
-                        size: 32,
-                      ),
+                      Icon(category['icon'], size: 32),
                       const SizedBox(height: 8),
                       Text(
                         category['name'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -360,10 +350,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 28),
           const Text(
             'Popular Today',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -377,8 +364,7 @@ class _HomePageState extends State<HomePage> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: featuredItems.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     return SizedBox(
                       width: itemWidth,
@@ -398,13 +384,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMenuPage() {
-    final categories = [
-      'All',
-      'Snacks',
-      'Meals',
-      'Drinks',
-      'Desserts',
-    ];
+    const categoryFilters = ['All', 'Snacks', 'Meals', 'Drinks', 'Desserts'];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -413,28 +393,22 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Text(
             'Our Menu',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
             'Choose something delicious.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
           SizedBox(
             height: 45,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
+              itemCount: categoryFilters.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final category = categories[index];
+                final category = categoryFilters[index];
                 final isSelected = selectedCategory == category;
 
                 return FilterChip(
@@ -452,19 +426,17 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 24),
           LayoutBuilder(
             builder: (context, constraints) {
-              final crossAxisCount =
-                  constraints.maxWidth >= 900
-                      ? 4
-                      : constraints.maxWidth >= 600
-                          ? 3
-                          : 2;
+              final crossAxisCount = constraints.maxWidth >= 900
+                  ? 4
+                  : constraints.maxWidth >= 600
+                  ? 3
+                  : 2;
 
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredItems.length,
-                gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
@@ -499,17 +471,12 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             const Text(
               'Your cart is empty',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Add some delicious food from the menu.',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
@@ -533,17 +500,12 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Text(
             'Your Cart',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
             '$cartCount item${cartCount == 1 ? '' : 's'} in your cart',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
           const SizedBox(height: 24),
           ListView.separated(
@@ -563,21 +525,15 @@ class _HomePageState extends State<HomePage> {
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primaryContainer,
+                          color: Theme.of(context).colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          item['icon'],
-                          size: 36,
-                        ),
+                        child: Icon(item['icon'], size: 36),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               item['name'],
@@ -589,18 +545,14 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: 5),
                             Text(
                               '₹${item['price']} each',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                              ),
+                              style: TextStyle(color: Colors.grey.shade600),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               '₹${item['price'] * item['quantity']}',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ],
@@ -609,12 +561,8 @@ class _HomePageState extends State<HomePage> {
                       Row(
                         children: [
                           IconButton(
-                            onPressed: () {
-                              decreaseQuantity(index);
-                            },
-                            icon: const Icon(
-                              Icons.remove_circle_outline,
-                            ),
+                            onPressed: () => decreaseQuantity(index),
+                            icon: const Icon(Icons.remove_circle_outline),
                           ),
                           Text(
                             '${item['quantity']}',
@@ -624,19 +572,13 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                           IconButton(
-                            onPressed: () {
-                              increaseQuantity(index);
-                            },
-                            icon: const Icon(
-                              Icons.add_circle_outline,
-                            ),
+                            onPressed: () => increaseQuantity(index),
+                            icon: const Icon(Icons.add_circle_outline),
                           ),
                         ],
                       ),
                       IconButton(
-                        onPressed: () {
-                          removeFromCart(index);
-                        },
+                        onPressed: () => removeFromCart(index),
                         icon: const Icon(Icons.delete_outline),
                       ),
                     ],
@@ -651,32 +593,20 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _priceRow(
-                    'Subtotal',
-                    '₹$cartTotal',
-                  ),
+                  _priceRow('Subtotal', '₹$cartTotal'),
                   const SizedBox(height: 10),
-                  _priceRow(
-                    'Service Fee',
-                    '₹0',
-                  ),
+                  _priceRow('Service Fee', '₹0'),
                   const Divider(height: 24),
-                  _priceRow(
-                    'Total',
-                    '₹$cartTotal',
-                    isTotal: true,
-                  ),
+                  _priceRow('Total', '₹$cartTotal', isTotal: true),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: () {},
+                      onPressed: placeOrder,
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 12,
-                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12),
                         child: Text(
-                          'Proceed to Checkout',
+                          'Place Order',
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
@@ -691,11 +621,127 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _priceRow(
-    String title,
-    String value, {
-    bool isTotal = false,
-  }) {
+  Widget _buildOrdersPage() {
+    if (orders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No orders yet',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your placed orders will appear here.',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () {
+                setState(() {
+                  selectedIndex = 1;
+                });
+              },
+              icon: const Icon(Icons.restaurant_menu),
+              label: const Text('Order Food'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: orders.length,
+      itemBuilder: (context, index) {
+        final order = orders[index];
+        final items = order['items'] as List<Map<String, dynamic>>;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      order['id'],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Chip(
+                      avatar: const Icon(Icons.access_time, size: 16),
+                      label: Text(order['status']),
+                    ),
+                  ],
+                ),
+                const Divider(height: 24),
+                ...items.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${item['name']} × ${item['quantity']}'),
+                        Text(
+                          '₹${item['price'] * item['quantity']}',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '₹${order['total']}',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfilePage() {
+    return const Center(
+      child: Text(
+        'Profile',
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _priceRow(String title, String value, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -703,8 +749,7 @@ class _HomePageState extends State<HomePage> {
           title,
           style: TextStyle(
             fontSize: isTotal ? 19 : 16,
-            fontWeight:
-                isTotal ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         Text(
@@ -745,24 +790,16 @@ class FoodCard extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  item['icon'],
-                  size: 64,
-                ),
+                child: Icon(item['icon'], size: 64),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               item['name'],
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
