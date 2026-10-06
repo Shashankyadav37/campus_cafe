@@ -32,6 +32,9 @@ class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
   String selectedCategory = 'All';
 
+  String studentName = 'Student';
+  String studentEmail = 'student@college.edu';
+
   final List<Map<String, dynamic>> cartItems = [];
   final List<Map<String, dynamic>> orders = [];
 
@@ -201,6 +204,79 @@ class _HomePageState extends State<HomePage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Order placed successfully!')));
+  }
+
+  void editProfile() {
+    final nameController = TextEditingController(text: studentName);
+    final emailController = TextEditingController(text: studentEmail);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() {
+                  studentName = nameController.text.trim().isEmpty
+                      ? 'Student'
+                      : nameController.text.trim();
+
+                  studentEmail = emailController.text.trim().isEmpty
+                      ? 'student@college.edu'
+                      : emailController.text.trim();
+                });
+
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showAboutDialogBox() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'CampusCafe',
+      applicationVersion: '1.0.0',
+      applicationIcon: const Icon(Icons.restaurant),
+      children: const [
+        Text(
+          'A simple digital cafeteria ordering app '
+          'built as a college project.',
+        ),
+      ],
+    );
   }
 
   @override
@@ -733,10 +809,95 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProfilePage() {
-    return const Center(
-      child: Text(
-        'Profile',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+
+          CircleAvatar(
+            radius: 55,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            child: Icon(
+              Icons.person,
+              size: 65,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            studentName,
+            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 6),
+
+          Text(
+            studentEmail,
+            style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: editProfile,
+              icon: const Icon(Icons.edit),
+              label: const Text('Edit Profile'),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.receipt_long),
+                  title: const Text('My Orders'),
+                  subtitle: Text(
+                    '${orders.length} order${orders.length == 1 ? '' : 's'} placed',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    setState(() {
+                      selectedIndex = 2;
+                    });
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.shopping_cart),
+                  title: const Text('Cart'),
+                  subtitle: Text('$cartCount item${cartCount == 1 ? '' : 's'}'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    setState(() {
+                      selectedIndex = 4;
+                    });
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('About CampusCafe'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: showAboutDialogBox,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          Text(
+            'CampusCafe v1.0.0',
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        ],
       ),
     );
   }
