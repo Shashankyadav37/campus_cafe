@@ -32,6 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
+  String selectedCategory = 'All';
 
   final List<String> pages = [
     'Home',
@@ -59,23 +60,66 @@ class _HomePageState extends State<HomePage> {
     },
   ];
 
-  final List<Map<String, dynamic>> featuredItems = [
+  final List<Map<String, dynamic>> menuItems = [
     {
       'name': 'Veg Burger',
       'price': 60,
+      'category': 'Snacks',
       'icon': Icons.lunch_dining,
+    },
+    {
+      'name': 'Samosa',
+      'price': 20,
+      'category': 'Snacks',
+      'icon': Icons.fastfood,
     },
     {
       'name': 'Masala Dosa',
       'price': 50,
+      'category': 'Meals',
       'icon': Icons.restaurant,
+    },
+    {
+      'name': 'Veg Fried Rice',
+      'price': 80,
+      'category': 'Meals',
+      'icon': Icons.rice_bowl,
     },
     {
       'name': 'Cold Coffee',
       'price': 40,
+      'category': 'Drinks',
       'icon': Icons.local_cafe,
     },
+    {
+      'name': 'Fresh Lime Soda',
+      'price': 30,
+      'category': 'Drinks',
+      'icon': Icons.local_drink,
+    },
+    {
+      'name': 'Ice Cream',
+      'price': 35,
+      'category': 'Desserts',
+      'icon': Icons.icecream,
+    },
+    {
+      'name': 'Gulab Jamun',
+      'price': 30,
+      'category': 'Desserts',
+      'icon': Icons.cake,
+    },
   ];
+
+  List<Map<String, dynamic>> get filteredItems {
+    if (selectedCategory == 'All') {
+      return menuItems;
+    }
+
+    return menuItems
+        .where((item) => item['category'] == selectedCategory)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +167,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBody() {
+    if (selectedIndex == 1) {
+      return _buildMenuPage();
+    }
+
     if (selectedIndex != 0) {
       return Center(
         child: Text(
@@ -134,6 +182,12 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+
+    return _buildHomePage();
+  }
+
+  Widget _buildHomePage() {
+    final featuredItems = menuItems.take(3).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -157,7 +211,6 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 24),
 
-          // Search bar
           TextField(
             decoration: InputDecoration(
               hintText: 'Search food...',
@@ -262,14 +315,110 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget _buildMenuPage() {
+    final categories = [
+      'All',
+      'Snacks',
+      'Meals',
+      'Drinks',
+      'Desserts',
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Our Menu',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Choose something delicious.',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            height: 45,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                final isSelected =
+                    selectedCategory == category;
+
+                return FilterChip(
+                  label: Text(category),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount =
+                  constraints.maxWidth >= 900
+                      ? 4
+                      : constraints.maxWidth >= 600
+                          ? 3
+                          : 2;
+
+              return GridView.builder(
+                shrinkWrap: true,
+                physics:
+                    const NeverScrollableScrollPhysics(),
+                itemCount: filteredItems.length,
+                gridDelegate:
+                    SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.78,
+                ),
+                itemBuilder: (context, index) {
+                  return FoodCard(
+                    item: filteredItems[index],
+                    showAddButton: true,
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class FoodCard extends StatelessWidget {
   final Map<String, dynamic> item;
+  final bool showAddButton;
 
   const FoodCard({
     super.key,
     required this.item,
+    this.showAddButton = false,
   });
 
   @override
@@ -314,6 +463,17 @@ class FoodCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (showAddButton) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
