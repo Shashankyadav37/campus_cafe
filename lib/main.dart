@@ -13,8 +13,17 @@ class CampusCafeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'CampusCafe',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.green,
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xfff8faf8),
+        cardTheme: CardThemeData(
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
       ),
       home: const HomePage(),
     );
@@ -201,9 +210,11 @@ class _HomePageState extends State<HomePage> {
       selectedIndex = 2;
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Order placed successfully!')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Order placed successfully!'),
+      ),
+    );
   }
 
   void editProfile() {
@@ -237,9 +248,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             FilledButton(
@@ -272,8 +281,7 @@ class _HomePageState extends State<HomePage> {
       applicationIcon: const Icon(Icons.restaurant),
       children: const [
         Text(
-          'A simple digital cafeteria ordering app '
-          'built as a college project.',
+          'A simple digital cafeteria ordering app built as a college project.',
         ),
       ],
     );
@@ -283,9 +291,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: const Text(
           'CampusCafe',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -357,560 +368,781 @@ class _HomePageState extends State<HomePage> {
     return _buildHomePage();
   }
 
+  Widget _pageContent(Widget child) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 1100,
+        ),
+        child: child,
+      ),
+    );
+  }
+
   Widget _buildHomePage() {
     final featuredItems = menuItems.take(3).toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Hello, Student! 👋',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'What would you like to eat today?',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search food...',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              fillColor: Colors.grey.shade100,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
+    return _pageContent(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWelcomeBanner(),
+            const SizedBox(height: 28),
+            _buildSectionTitle('Categories'),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 105,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: categories.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: 14),
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+
+                  return SizedBox(
+                    width: 115,
+                    child: Card(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(18),
+                        onTap: () {
+                          setState(() {
+                            selectedCategory = category['name'];
+                            selectedIndex = 1;
+                          });
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              category['icon'],
+                              size: 32,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              category['name'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Categories',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 100,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categories.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final category = categories[index];
+            const SizedBox(height: 30),
+            _buildSectionTitle('Popular Today'),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 700;
 
-                return Container(
-                  width: 100,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(category['icon'], size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        category['name'],
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                if (isWide) {
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics:
+                        const NeverScrollableScrollPhysics(),
+                    itemCount: featuredItems.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.05,
+                    ),
+                    itemBuilder: (context, index) {
+                      return FoodCard(
+                        item: featuredItems[index],
+                        onAdd: () =>
+                            addToCart(featuredItems[index]),
+                      );
+                    },
+                  );
+                }
+
+                return SizedBox(
+                  height: 245,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: featuredItems.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: 14),
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 230,
+                        child: FoodCard(
+                          item: featuredItems[index],
+                          onAdd: () =>
+                              addToCart(featuredItems[index]),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Popular Today',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth = constraints.maxWidth > 700
-                  ? (constraints.maxWidth - 24) / 3
-                  : 220.0;
+          ],
+        ),
+      ),
+    );
+  }
 
-              return SizedBox(
-                height: 230,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: featuredItems.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    return SizedBox(
-                      width: itemWidth,
-                      child: FoodCard(
-                        item: featuredItems[index],
-                        onAdd: () => addToCart(featuredItems[index]),
-                      ),
-                    );
-                  },
+  Widget _buildWelcomeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Theme.of(context)
+            .colorScheme
+            .primaryContainer,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 550;
+
+          final text = Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hello, $studentName! 👋',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Fresh food, right from your campus cafeteria.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: compact ? double.infinity : 220,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      selectedIndex = 1;
+                    });
+                  },
+                  icon: const Icon(Icons.restaurant_menu),
+                  label: const Text('Explore Menu'),
+                ),
+              ),
+            ],
+          );
+
+          if (compact) {
+            return text;
+          }
+
+          return Row(
+            children: [
+              Expanded(child: text),
+              const SizedBox(width: 30),
+              Icon(
+                Icons.restaurant,
+                size: 110,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 21,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
 
   Widget _buildMenuPage() {
-    const categoryFilters = ['All', 'Snacks', 'Meals', 'Drinks', 'Desserts'];
+    const categoryFilters = [
+      'All',
+      'Snacks',
+      'Meals',
+      'Drinks',
+      'Desserts',
+    ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Our Menu',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Choose something delicious.',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 45,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: categoryFilters.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final category = categoryFilters[index];
-                final isSelected = selectedCategory == category;
+    return _pageContent(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Our Menu',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Choose something delicious.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              height: 45,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: categoryFilters.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final category = categoryFilters[index];
 
-                return FilterChip(
-                  label: Text(category),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    setState(() {
-                      selectedCategory = category;
-                    });
+                  return FilterChip(
+                    label: Text(category),
+                    selected:
+                        selectedCategory == category,
+                    onSelected: (_) {
+                      setState(() {
+                        selectedCategory = category;
+                      });
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final crossAxisCount =
+                    constraints.maxWidth >= 900
+                        ? 4
+                        : constraints.maxWidth >= 600
+                            ? 3
+                            : 2;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics:
+                      const NeverScrollableScrollPhysics(),
+                  itemCount: filteredItems.length,
+                  gridDelegate:
+                      SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.72,
+                  ),
+                  itemBuilder: (context, index) {
+                    return FoodCard(
+                      item: filteredItems[index],
+                      showAddButton: true,
+                      onAdd: () =>
+                          addToCart(filteredItems[index]),
+                    );
                   },
                 );
               },
             ),
-          ),
-          const SizedBox(height: 24),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth >= 900
-                  ? 4
-                  : constraints.maxWidth >= 600
-                  ? 3
-                  : 2;
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredItems.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.72,
-                ),
-                itemBuilder: (context, index) {
-                  return FoodCard(
-                    item: filteredItems[index],
-                    showAddButton: true,
-                    onAdd: () => addToCart(filteredItems[index]),
-                  );
-                },
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCartPage() {
     if (cartItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 80,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Your cart is empty',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add some delicious food from the menu.',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () {
-                setState(() {
-                  selectedIndex = 1;
-                });
-              },
-              icon: const Icon(Icons.restaurant_menu),
-              label: const Text('Browse Menu'),
-            ),
-          ],
-        ),
+      return _emptyState(
+        icon: Icons.shopping_cart_outlined,
+        title: 'Your cart is empty',
+        message: 'Add something delicious from the menu.',
+        buttonText: 'Browse Menu',
+        onPressed: () {
+          setState(() {
+            selectedIndex = 1;
+          });
+        },
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Your Cart',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '$cartCount item${cartCount == 1 ? '' : 's'} in your cart',
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: cartItems.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final item = cartItems[index];
-
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
+    return _pageContent(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Cart',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$cartCount item${cartCount == 1 ? '' : 's'} in your cart',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 24),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth >= 750) {
+                  return Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(item['icon'], size: 36),
-                      ),
-                      const SizedBox(width: 14),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['name'],
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              '₹${item['price']} each',
-                              style: TextStyle(color: Colors.grey.shade600),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '₹${item['price'] * item['quantity']}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          ],
+                        flex: 3,
+                        child: _buildCartItems(),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 2,
+                        child: _buildCartSummary(),
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
+                  children: [
+                    _buildCartItems(),
+                    const SizedBox(height: 20),
+                    _buildCartSummary(),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCartItems() {
+    return Column(
+      children: List.generate(
+        cartItems.length,
+        (index) {
+          final item = cartItems[index];
+
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer,
+                      borderRadius:
+                          BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      item['icon'],
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['name'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '₹${item['price']} each',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '₹${item['price'] * item['quantity']}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () =>
+                            decreaseQuantity(index),
+                        icon: const Icon(
+                          Icons.remove_circle_outline,
                         ),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => decreaseQuantity(index),
-                            icon: const Icon(Icons.remove_circle_outline),
-                          ),
-                          Text(
-                            '${item['quantity']}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => increaseQuantity(index),
-                            icon: const Icon(Icons.add_circle_outline),
-                          ),
-                        ],
+                      Text(
+                        '${item['quantity']}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       IconButton(
-                        onPressed: () => removeFromCart(index),
-                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () =>
+                            increaseQuantity(index),
+                        icon: const Icon(
+                          Icons.add_circle_outline,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  _priceRow('Subtotal', '₹$cartTotal'),
-                  const SizedBox(height: 10),
-                  _priceRow('Service Fee', '₹0'),
-                  const Divider(height: 24),
-                  _priceRow('Total', '₹$cartTotal', isTotal: true),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: placeOrder,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          'Place Order',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ),
+                  IconButton(
+                    onPressed: () =>
+                        removeFromCart(index),
+                    icon: const Icon(
+                      Icons.delete_outline,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCartSummary() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Order Summary',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            _priceRow('Subtotal', '₹$cartTotal'),
+            const SizedBox(height: 10),
+            _priceRow('Service Fee', '₹0'),
+            const Divider(height: 28),
+            _priceRow(
+              'Total',
+              '₹$cartTotal',
+              isTotal: true,
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: placeOrder,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 12,
+                  ),
+                  child: Text('Place Order'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildOrdersPage() {
     if (orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 80,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No orders yet',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your placed orders will appear here.',
-              style: TextStyle(color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: () {
-                setState(() {
-                  selectedIndex = 1;
-                });
-              },
-              icon: const Icon(Icons.restaurant_menu),
-              label: const Text('Order Food'),
-            ),
-          ],
-        ),
+      return _emptyState(
+        icon: Icons.receipt_long_outlined,
+        title: 'No orders yet',
+        message: 'Your placed orders will appear here.',
+        buttonText: 'Order Food',
+        onPressed: () {
+          setState(() {
+            selectedIndex = 1;
+          });
+        },
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        final items = order['items'] as List<Map<String, dynamic>>;
+    return _pageContent(
+      ListView.builder(
+        padding: const EdgeInsets.all(24),
+        itemCount: orders.length,
+        itemBuilder: (context, index) {
+          final order = orders[index];
+          final items =
+              order['items'] as List<Map<String, dynamic>>;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      order['id'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Chip(
-                      avatar: const Icon(Icons.access_time, size: 16),
-                      label: Text(order['status']),
-                    ),
-                  ],
-                ),
-                const Divider(height: 24),
-                ...items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('${item['name']} × ${item['quantity']}'),
-                        Text(
-                          '₹${item['price'] * item['quantity']}',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        order['id'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
+                      ),
+                      Chip(
+                        avatar: const Icon(
+                          Icons.access_time,
+                          size: 16,
+                        ),
+                        label: Text(order['status']),
+                      ),
+                    ],
                   ),
-                ),
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                  const Divider(height: 24),
+                  ...items.map(
+                    (item) => Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: 9),
+                      child: Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${item['name']} × ${item['quantity']}',
+                          ),
+                          Text(
+                            '₹${item['price'] * item['quantity']}',
+                            style: const TextStyle(
+                              fontWeight:
+                                  FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      '₹${order['total']}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProfilePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-
-          CircleAvatar(
-            radius: 55,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: Icon(
-              Icons.person,
-              size: 65,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Text(
-            studentName,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-          ),
-
-          const SizedBox(height: 6),
-
-          Text(
-            studentEmail,
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
-          ),
-
-          const SizedBox(height: 24),
-
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: editProfile,
-              icon: const Icon(Icons.edit),
-              label: const Text('Edit Profile'),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.receipt_long),
-                  title: const Text('My Orders'),
-                  subtitle: Text(
-                    '${orders.length} order${orders.length == 1 ? '' : 's'} placed',
                   ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 2;
-                    });
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.shopping_cart),
-                  title: const Text('Cart'),
-                  subtitle: Text('$cartCount item${cartCount == 1 ? '' : 's'}'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 4;
-                    });
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('About CampusCafe'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: showAboutDialogBox,
-                ),
-              ],
+                  const Divider(height: 24),
+                  _priceRow(
+                    'Total',
+                    '₹${order['total']}',
+                    isTotal: true,
+                  ),
+                ],
+              ),
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Text(
-            'CampusCafe v1.0.0',
-            style: TextStyle(color: Colors.grey.shade500),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _priceRow(String title, String value, {bool isTotal = false}) {
+  Widget _buildProfilePage() {
+    return _pageContent(
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            CircleAvatar(
+              radius: 58,
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer,
+              child: Icon(
+                Icons.person,
+                size: 68,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              studentName,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              studentEmail,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: 240,
+              child: FilledButton.icon(
+                onPressed: editProfile,
+                icon: const Icon(Icons.edit),
+                label: const Text('Edit Profile'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.receipt_long),
+                    title: const Text('My Orders'),
+                    subtitle: Text(
+                      '${orders.length} order${orders.length == 1 ? '' : 's'} placed',
+                    ),
+                    trailing:
+                        const Icon(Icons.chevron_right),
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 2;
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading:
+                        const Icon(Icons.shopping_cart),
+                    title: const Text('Cart'),
+                    subtitle: Text(
+                      '$cartCount item${cartCount == 1 ? '' : 's'}',
+                    ),
+                    trailing:
+                        const Icon(Icons.chevron_right),
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 4;
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading:
+                        const Icon(Icons.info_outline),
+                    title:
+                        const Text('About CampusCafe'),
+                    trailing:
+                        const Icon(Icons.chevron_right),
+                    onTap: showAboutDialogBox,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'CampusCafe v1.0.0',
+              style: TextStyle(
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState({
+    required IconData icon,
+    required String title,
+    required String message,
+    required String buttonText,
+    required VoidCallback onPressed,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 80,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 22),
+            FilledButton.icon(
+              onPressed: onPressed,
+              icon: const Icon(Icons.restaurant_menu),
+              label: Text(buttonText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _priceRow(
+    String title,
+    String value, {
+    bool isTotal = false,
+  }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment:
+          MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
           style: TextStyle(
             fontSize: isTotal ? 19 : 16,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isTotal
+                ? FontWeight.bold
+                : FontWeight.normal,
           ),
         ),
         Text(
@@ -940,34 +1172,45 @@ class FoodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer,
+                  borderRadius:
+                      BorderRadius.circular(14),
                 ),
-                child: Icon(item['icon'], size: 64),
+                child: Icon(
+                  item['icon'],
+                  size: 64,
+                ),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               item['name'],
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               '₹${item['price']}',
               style: TextStyle(
                 fontSize: 16,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
